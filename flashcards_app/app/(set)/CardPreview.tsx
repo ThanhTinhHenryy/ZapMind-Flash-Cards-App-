@@ -3,12 +3,11 @@ import LoginButton from "@/components/LoginButton";
 import CardInSetDiscover from "@/components/ui/CardInSetDiscover";
 import { COLORS } from "@/constants/theme";
 import { sampleCards } from "@/data/data.test";
-import { useRoute } from "@react-navigation/native";
 import React from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
 const CardPreview = () => {
-  const route = useRoute<any>();
+  // const route = useRoute<any>();
   // const { setId, setTitle } = route.params;
 
   // ! FIXME: HARDCODE
