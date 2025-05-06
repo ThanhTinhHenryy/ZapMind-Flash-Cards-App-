@@ -31,6 +31,7 @@ export default function Bookmark() {
         onChangeText={setSearchText}
         onSearch={handleSearch}
       />
+      {/* Doi thanh flatlist */}
       <ScrollView contentContainerStyle={styles.setList}>
         {testSets.map((item, index) => (
           <SetBookmark

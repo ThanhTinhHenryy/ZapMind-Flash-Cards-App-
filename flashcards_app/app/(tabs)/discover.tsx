@@ -30,6 +30,7 @@ export default function Discover() {
         onChangeText={setSearchText}
         onSearch={handleSearch}
       />
+      {/* Doi thanh flatlist */}
       <ScrollView contentContainerStyle={styles.setList}>
         {testSets.map((item, index) => (
           <SetDiscover
