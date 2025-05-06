@@ -18,7 +18,10 @@ export default function Discover() {
     console.log(`Thêm set: ${title}`);
   };
   // * Press
-
+  const handlePreview = (title: string) => {
+    console.log(`Preview Set: ${title}`);
+    // navigation tới set muốn preview
+  };
   return (
     <View style={styles.discoverScreen}>
       <Title textTitle="Discover"></Title>
@@ -36,6 +39,7 @@ export default function Discover() {
             cards={item.cards}
             imageUrl={item.imageUrl}
             onPressAdd={() => handleAdd(item.titleSet)}
+            onPressPreview={() => handlePreview(item.titleSet)}
           />
         ))}
       </ScrollView>

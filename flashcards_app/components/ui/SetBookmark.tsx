@@ -13,7 +13,7 @@ type Props = {
   imageUrl?: string;
 };
 
-const SetDiscover = ({
+const SetBookmark = ({
   titleSet,
   creator,
   cards,
@@ -33,19 +33,19 @@ const SetDiscover = ({
       <View style={{ flex: 1 }}>
         <Text style={styles.title}>{titleSet}</Text>
         <Text style={styles.creator}>Tác giả: {creator}</Text>
-        <Text style={styles.cards}>{cards} thẻ</Text>
+        <Text style={styles.cards}>Thẻ: {cards}</Text>
       </View>
       <TouchableOpacity style={styles.addButton} onPress={onPressPreview}>
         <Ionicons name="eye-outline" size={28} color={COLORS.primary} />
       </TouchableOpacity>
       <TouchableOpacity style={styles.addButton} onPress={onPressAdd}>
-        <Ionicons name="add-circle-outline" size={28} color={COLORS.primary} />
+        <Ionicons name="bookmark" size={28} color={COLORS.primary} />
       </TouchableOpacity>
     </View>
   );
 };
 
-export default SetDiscover;
+export default SetBookmark;
 
 const styles = StyleSheet.create({
   cardContainer: {
