@@ -3,6 +3,7 @@ import LoginButton from "@/components/LoginButton";
 import CardInSetDiscover from "@/components/ui/CardInSetDiscover";
 import { COLORS } from "@/constants/theme";
 import { sampleCards } from "@/data/data.test";
+import { useRouter } from "expo-router";
 import React from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
@@ -14,9 +15,14 @@ const CardPreview = () => {
   const setId = 5;
   const setTitle = "Essential Words";
   const cards = sampleCards.filter((card) => card.id_set === setId);
+  const router = useRouter();
 
   const handleLearn = () => {
     console.log(`Bắt đầu học set: ${setTitle}`);
+  };
+
+  const handleTest = () => {
+    router.push("/(learn)/TestSetCard");
   };
 
   return (
@@ -43,6 +49,7 @@ const CardPreview = () => {
       </View>
 
       <View style={styles.buttonContainer}>
+        <LoginButton title="Kiểm Tra" onPress={handleTest} />
         <LoginButton title="Học ngay." onPress={handleLearn} />
         {/* <Button title="Học ngay" onPress={handleLearn} /> */}
       </View>
