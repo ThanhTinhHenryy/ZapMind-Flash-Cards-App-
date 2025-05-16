@@ -43,22 +43,54 @@ export const testSets = [
     cards: 9,
     imageUrl: setImages.ronaldo,
   },
+  {
+    id: 6,
+    titleSet: "Basic English",
+    creator: "Nguyễn Văn A",
+    cards: 20,
+    imageUrl: "https://example.com/image1.jpg",
+  },
+  {
+    id: 7,
+    titleSet: "Advanced Words",
+    creator: "Trần Thị B",
+    cards: 35,
+    imageUrl: "https://example.com/image2.jpg",
+  },
+  {
+    id: 8,
+    titleSet: "Advanced Words",
+    creator: "Trần Thị B",
+    cards: 35,
+    imageUrl: "https://example.com/image2.jpg",
+  },
+  {
+    id: 9,
+    titleSet: "Advanced Words",
+    creator: "Trần Thị B",
+    cards: 35,
+    imageUrl: "https://example.com/image2.jpg",
+  },
 ];
 
 export const sampleCards = [
   {
     id: 1,
     id_set: 5,
-    word: "Apple",
-    meaning: "Quả táo",
+    word: "apple",
+    meaning: "quả táo",
+
     image: "https://cdn-icons-png.flaticon.com/512/415/415682.png",
+
+    pronun: "/ˈæp.əl/",
   },
   {
     id: 2,
     id_set: 5,
-    word: "Cat",
-    meaning: "Con mèo",
-    image: "https://cdn-icons-png.flaticon.com/512/616/616408.png",
+    word: "book",
+    meaning: "sách",
+    image: "https://example.com/book.jpg",
+    pronun: "/bʊk/",
   },
   {
     id: 3,

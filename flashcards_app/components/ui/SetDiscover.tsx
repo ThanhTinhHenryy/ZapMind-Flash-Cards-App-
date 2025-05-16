@@ -9,6 +9,7 @@ type Props = {
   creator: string;
   cards: number;
   onPressAdd: () => void;
+  onPressPreview: () => void;
   imageUrl?: string;
 };
 
@@ -17,6 +18,7 @@ const SetDiscover = ({
   creator,
   cards,
   onPressAdd,
+  onPressPreview,
   imageUrl,
 }: Props) => {
   return (
@@ -33,6 +35,9 @@ const SetDiscover = ({
         <Text style={styles.creator}>Tác giả: {creator}</Text>
         <Text style={styles.cards}>{cards} thẻ</Text>
       </View>
+      <TouchableOpacity style={styles.addButton} onPress={onPressPreview}>
+        <Ionicons name="eye-outline" size={28} color={COLORS.primary} />
+      </TouchableOpacity>
       <TouchableOpacity style={styles.addButton} onPress={onPressAdd}>
         <Ionicons name="add-circle-outline" size={28} color={COLORS.primary} />
       </TouchableOpacity>
@@ -40,7 +45,7 @@ const SetDiscover = ({
   );
 };
 
-export default SetDiscover; // 👈 đã đổi cho khớp tên component
+export default SetDiscover;
 
 const styles = StyleSheet.create({
   cardContainer: {

@@ -9,4 +9,5 @@ export const COLORS = {
   white: "#FFFFFF",
   grey: "#9CA3AF",
   titleColor: "#8C76E5",
+  success: "#4CAF50",
 } as const;
