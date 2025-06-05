@@ -2,67 +2,98 @@ import Header from "@/components/common/Header";
 import InputPlace from "@/components/InputPlace";
 import LoginButton from "@/components/LoginButton";
 import { COLORS } from "@/constants/theme";
-import { updateCard } from "@/data/apiCard";
+import { deleteCard, updateCard } from "@/data/apiCard";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
-import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 
 type Props = {
   imageUrl?: string;
 };
-
+interface Card {
+  id: 1;
+  deck_id: 1;
+  front_text: string;
+  back_text: string;
+  image_url: "";
+  created_at: "2025-05-04T02:10:42.000Z";
+}
 const CreateCard = ({ imageUrl }: Props) => {
-  const { cardId } = useLocalSearchParams();
+  const route = useLocalSearchParams();
+  const setId = route.setId;
+  const setTitle = route.setTitle;
+  const cardId = route.cardId;
+  const card = JSON.parse(route.card as string) as Card;
+  const [front_text, setFront_text] = useState(card.front_text);
+  const [back_text, setBack_text] = useState(card.back_text);
+  const fullImageUrl = `http://192.168.26.121:5000${card.image_url}`;
 
-  const [front_text, setFront_text] = useState("");
-  const [back_text, setBack_text] = useState("");
-  const [pickedImage, setPickedImage] = useState<string | null>(
-    imageUrl ?? null
-  );
+  const [pickedImage, setPickedImage] = useState<string | null>(fullImageUrl);
 
-  // * Tạo card
   // * Tạo card
   const handleUpdate = async (
     cardId: any,
     front_text: string,
     back_text: string
   ) => {
-    console.log("--------------");
-
-    console.log(cardId);
-
     try {
       if (!front_text || !back_text) {
         alert("Vui lòng nhập đầy đủ thông tin card.");
         return;
       }
 
-      let imageFile: File | null = null;
+      const image = pickedImage
+        ? {
+            uri: pickedImage,
+            name: `card_${Date.now()}.jpg`,
+            type: "image/jpeg",
+          }
+        : undefined;
 
-      if (pickedImage) {
-        const response = await fetch(pickedImage);
-        const blob = await response.blob();
-
-        imageFile = new File([blob], `card_${Date.now()}.jpg`, {
-          type: "image/jpeg",
-        });
-      }
-
-      const updatedCard = await updateCard(cardId, {
+      const update = await updateCard(
+        cardId, // deck_id, bạn thay bằng id thật tương ứng
         front_text,
         back_text,
-        image: imageFile,
-      });
+        image
+      );
 
-      console.log("Card cập nhật thành công:", updatedCard);
       alert("Cập nhật card thành công!");
-      router.push("/(set)/CardPreview");
+      router.push({
+        pathname: "/(set)/CardPreview",
+        params: { setId: setId, setTitle: setTitle },
+      });
     } catch (error: any) {
-      console.error("Lỗi cập nhật card:", error);
       alert("Lỗi cập nhật card: " + error.message);
     }
+  };
+
+  // * Xoá card
+  const handleDelete = () => {
+    if (!cardId) {
+      alert("Thiếu cardId!");
+      return;
+    }
+    Alert.alert("Xác nhận xoá", "Bạn có chắc muốn xoá card này?", [
+      { text: "Huỷ", style: "cancel" },
+      {
+        text: "Xoá",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteCard(cardId);
+            alert("Đã xoá card!");
+            router.push({
+              pathname: "/(set)/CardPreview",
+              params: { setId: setId, setTitle: setTitle },
+            });
+          } catch (error: any) {
+            alert("Lỗi xoá card: " + error.message);
+          }
+        },
+      },
+    ]);
   };
 
   // * Chọn ảnh
@@ -88,7 +119,7 @@ const CreateCard = ({ imageUrl }: Props) => {
 
   return (
     <View style={styles.container}>
-      <Header title="Update Card" />
+      <Header title="Update/Delete Card" />
 
       <View style={styles.content}>
         <View style={styles.createContainer}>
@@ -129,6 +160,11 @@ const CreateCard = ({ imageUrl }: Props) => {
             title="Update Card"
             onPress={() => handleUpdate(cardId, front_text, back_text)}
             style={styles.createButton}
+          />
+          <LoginButton
+            title="Delete Card"
+            onPress={handleDelete}
+            style={{ backgroundColor: "red", marginTop: 20 }}
           />
         </View>
       </View>

@@ -146,11 +146,17 @@ const CardPreview = () => {
               <CardInSetDiscover
                 word={item.front_text}
                 meaning={item.back_text}
-                image={"http://192.168.193.121:5000" + item.image_url || ""}
+                image={"http://192.168.26.121:5000" + item.image_url || ""}
                 onPress={() => {
+                  const card = cards.find((card) => card.id === item.id);
                   router.push({
                     pathname: "/(create)/UpdateCard",
-                    params: { cardId: item.id },
+                    params: {
+                      cardId: item.id,
+                      setId: setId,
+                      setTitle: setTitle,
+                      card: JSON.stringify(card),
+                    },
                   });
                 }}
               />

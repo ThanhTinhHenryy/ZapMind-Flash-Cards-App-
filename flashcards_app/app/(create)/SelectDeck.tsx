@@ -63,7 +63,7 @@ import SetHome from "@/components/ui/SetHome";
 import { COLORS } from "@/constants/theme";
 import { getUser } from "@/data/userStore";
 import { fetchDecks } from "data/apiDeck";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
 
@@ -80,6 +80,7 @@ interface Deck {
 
 export default function Index() {
   const [sets, setSets] = useState<Deck[]>([]);
+  const { loai } = useLocalSearchParams();
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const user = getUser();
@@ -89,7 +90,6 @@ export default function Index() {
     const getDecks = async () => {
       try {
         const data = await fetchDecks(userId);
-        console.log(data);
 
         setSets(data);
       } catch (error) {
@@ -117,13 +117,20 @@ export default function Index() {
                 titleSet={item.name}
                 creator={user.name}
                 cards={item.sl}
-                imageUrl={"http://192.168.193.121:5000" + item.image_url || ""}
-                onPressView={() =>
-                  router.push({
-                    pathname: "/(create)/CreateCardGG",
-                    params: { setId: item.id, setTitle: item.name },
-                  })
-                }
+                imageUrl={"http://192.168.26.121:5000" + item.image_url || ""}
+                onPressView={() => {
+                  if (loai === "normal") {
+                    router.push({
+                      pathname: "/(create)/CreateCard",
+                      params: { setId: item.id, setTitle: item.name },
+                    });
+                  } else if (loai === "AI") {
+                    router.push({
+                      pathname: "/(create)/CreateCardGG",
+                      params: { setId: item.id, setTitle: item.name },
+                    });
+                  }
+                }}
               />
             )}
           />

@@ -1,14 +1,25 @@
-// import Header from "@/components/common/Header";
+import Header from "@/components/common/Header";
 import { COLORS } from "@/constants/theme";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import Voice from "@react-native-voice/voice";
-import { Header } from "@react-navigation/elements";
+import { transcribeAudio } from "data/apiVoice"; // Đảm bảo đúng đường dẫn tới voiceApi.js
+import { Audio } from "expo-av";
+import * as FileSystem from "expo-file-system";
 import { useLocalSearchParams } from "expo-router";
 import * as Speech from "expo-speech";
-import React, { useEffect, useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Dimensions,
+  Easing,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-// Gọi hàm này khi cần phát âm từ
 const speakWord = (text: string) => {
   if (!text) return;
   Speech.speak(text, {
@@ -17,6 +28,8 @@ const speakWord = (text: string) => {
     rate: 0.9,
   });
 };
+
+const SCREEN_WIDTH = Dimensions.get("window").width;
 
 const LearnCard = () => {
   interface Card {
@@ -27,134 +40,365 @@ const LearnCard = () => {
     image_url: string;
     created_at: string;
   }
+  const recordingOptions = {
+    android: {
+      extension: ".m4a",
+      outputFormat: 2,
+      audioEncoder: 3,
+      sampleRate: 44100,
+      numberOfChannels: 2,
+      bitRate: 128000,
+    },
+    ios: {
+      extension: ".caf",
+      audioQuality: 12727,
+      sampleRate: 44100,
+      numberOfChannels: 2,
+      bitRate: 128000,
+      linearPCMBitDepth: 16,
+      linearPCMIsBigEndian: false,
+      linearPCMIsFloat: false,
+    },
+    web: {
+      mimeType: "audio/webm",
+      bitsPerSecond: 128000,
+    },
+  };
 
   const route = useLocalSearchParams();
-  const setTitle = route.setTitle;
+  const title = route.title || "Học thẻ";
   const cards: Card[] = JSON.parse(route.cards as string);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFront, setIsFront] = useState(true);
   const [spokenText, setSpokenText] = useState("");
-  const [isListening, setIsListening] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const recordingRef = useRef<Audio.Recording | null>(null);
+
+  // Animation
+  const [flipAnim] = useState(new Animated.Value(0));
+  const flipToValue = useRef(0);
+
+  // Slide animation
+  const [slideAnim] = useState(new Animated.Value(0)); // 0 là giữa
 
   const currentCard = cards[currentIndex];
-
-  // So sánh từ người dùng nói với từ đúng
-  const isCorrect =
-    spokenText.trim().toLowerCase() ===
-    currentCard.back_text.trim().toLowerCase();
+  const correctAnswer = currentCard.front_text.trim().toLowerCase();
+  const isCorrect = spokenText === correctAnswer;
 
   useEffect(() => {
-    Voice.onSpeechResults = (result) => {
-      if (result.value && result.value.length > 0) {
-        setSpokenText(result.value[0]);
-        setIsListening(false);
+    // Request microphone permissions on mount
+    (async () => {
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission needed", "Microphone permission is required.");
       }
-    };
+    })();
 
     return () => {
-      Voice.destroy().then(Voice.removeAllListeners);
+      // Cleanup recording if any
+      if (recordingRef.current) {
+        recordingRef.current.stopAndUnloadAsync();
+        recordingRef.current = null;
+      }
     };
   }, []);
 
-  const startListening = async () => {
+  const startRecording = async () => {
     try {
       setSpokenText("");
-      setIsListening(true);
-      await Voice.start("en-US");
-    } catch (e) {
-      console.error("Voice start error:", e);
+      setIsRecording(true);
+
+      // Prepare recording
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      const recording = new Audio.Recording();
+      await recording.prepareToRecordAsync(recordingOptions);
+
+      await recording.startAsync();
+
+      recordingRef.current = recording;
+    } catch (error) {
+      console.error("Failed to start recording", error);
+      Alert.alert("Error", "Không thể bắt đầu ghi âm.");
+      setIsRecording(false);
     }
   };
 
-  const stopListening = async () => {
+  const stopRecording = async () => {
     try {
-      await Voice.stop();
-      setIsListening(false);
+      if (!recordingRef.current) return;
+
+      setIsRecording(false);
+      setLoading(true);
+
+      await recordingRef.current.stopAndUnloadAsync();
+
+      const uri = recordingRef.current.getURI();
+      recordingRef.current = null;
+
+      if (!uri) {
+        Alert.alert("Error", "Không lấy được file ghi âm.");
+        setLoading(false);
+        return;
+      }
+
+      // Tạo object audioFile để truyền sang transcribeAudio
+      const audioFile = {
+        uri,
+        name: uri.split("/").pop() || "audio.wav",
+        type: "audio/wav", // hoặc "audio/x-m4a" nếu là m4a, tùy platform
+      };
+
+      // Gọi API mới
+      const transcript = await transcribeAudio(audioFile);
+      console.log("client Transcript:", transcript);
+
+      if (transcript) {
+        const spoken = transcript.trim().toLowerCase();
+        setSpokenText(spoken);
+      } else {
+        Alert.alert("Lỗi", "Không nhận được kết quả từ API.");
+      }
+    } catch (error) {
+      console.error("Stop recording error", error);
+      Alert.alert("Lỗi", "Không thể xử lý ghi âm.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper: đọc file local thành base64 (expo-file-system)
+  const fileToBase64 = async (uri: string): Promise<string> => {
+    try {
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      return base64;
     } catch (e) {
-      console.error("Voice stop error:", e);
+      console.error("File to base64 error:", e);
+      return "";
     }
   };
 
   const handleFlip = () => {
-    setIsFront(!isFront);
+    const toValue = flipToValue.current === 0 ? 180 : 0;
+    Animated.timing(flipAnim, {
+      toValue,
+      duration: 400,
+      useNativeDriver: true,
+      easing: Easing.inOut(Easing.ease),
+    }).start(() => {
+      setIsFront(toValue === 0);
+      flipToValue.current = toValue;
+      setSpokenText(""); // Reset kết quả khi lật thẻ
+    });
   };
 
+  // Hiệu ứng slide khi chuyển thẻ
   const handleNext = () => {
-    setIsFront(true);
     if (currentIndex < cards.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-      setSpokenText(""); // reset kết quả
+      Animated.timing(slideAnim, {
+        toValue: -SCREEN_WIDTH,
+        duration: 150, // Giảm thời gian xuống
+        useNativeDriver: true,
+      }).start(() => {
+        setCurrentIndex((prev) => prev + 1);
+        setIsFront(true);
+        setSpokenText("");
+        slideAnim.setValue(SCREEN_WIDTH);
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 150, // Giảm thời gian xuống
+          useNativeDriver: true,
+        }).start();
+        Animated.timing(flipAnim, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: true,
+        }).start(() => {
+          flipToValue.current = 0;
+        });
+      });
     } else {
-      alert("Bạn đã học hết các thẻ!");
+      Alert.alert("Thông báo", "Bạn đã học hết các thẻ!");
     }
   };
 
   const handleBack = () => {
     if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
-      setIsFront(true);
-      setSpokenText("");
+      Animated.timing(slideAnim, {
+        toValue: SCREEN_WIDTH,
+        duration: 150, // Giảm thời gian xuống
+        useNativeDriver: true,
+      }).start(() => {
+        setCurrentIndex((prev) => prev - 1);
+        setIsFront(true);
+        setSpokenText("");
+        slideAnim.setValue(-SCREEN_WIDTH);
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 150, // Giảm thời gian xuống
+          useNativeDriver: true,
+        }).start();
+        Animated.timing(flipAnim, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: true,
+        }).start(() => {
+          flipToValue.current = 0;
+        });
+      });
     } else {
-      alert("Đây là thẻ đầu tiên.");
+      Alert.alert("Thông báo", "Đây là thẻ đầu tiên.");
     }
   };
 
+  // Animation interpolate
+  const frontInterpolate = flipAnim.interpolate({
+    inputRange: [0, 180],
+    outputRange: ["0deg", "180deg"],
+  });
+  const backInterpolate = flipAnim.interpolate({
+    inputRange: [0, 180],
+    outputRange: ["180deg", "360deg"],
+  });
+
   return (
     <View style={styles.container}>
-      <Header title={setTitle.toString()} />
+      <Header title={title.toString()} />
       <View style={styles.notHeader}>
         <View style={styles.card}>
-          <Image
-            source={{
-              uri: "http://192.168.193.121:5000" + currentCard.image_url,
-            }}
-            style={styles.image}
-            resizeMode="cover"
-          />
-          {isFront ? (
+          {/* Card front */}
+          <Animated.View
+            style={[
+              styles.card,
+              {
+                backfaceVisibility: "hidden",
+                transform: [
+                  { rotateY: frontInterpolate },
+                  { translateX: slideAnim },
+                ],
+                position: "absolute",
+                width: "100%",
+                height: "100%",
+              },
+            ]}
+            onTouchEnd={handleFlip} // Giữ lại dòng này
+          >
+            <Image
+              source={{
+                uri: "http://192.168.26.121:5000" + currentCard.image_url,
+              }}
+              style={styles.image}
+              resizeMode="contain"
+            />
             <Text style={styles.word}>{currentCard.front_text}</Text>
-          ) : (
-            <>
-              <Text style={styles.meaning}>{currentCard.back_text}</Text>
-              <Text style={styles.pronun}>{""}</Text>
-            </>
-          )}
-
-          {/* Nút phát âm */}
-          <TouchableOpacity onPress={() => speakWord(currentCard.front_text)}>
-            <MaterialCommunityIcons
-              name="volume-high"
-              size={24}
-              color={COLORS.primary}
+            {/* Nút phát âm */}
+            <TouchableOpacity
+              style={{ marginTop: 20 }}
+              onPress={() => speakWord(currentCard.front_text)}
+            >
+              <MaterialCommunityIcons
+                name="volume-high"
+                size={24}
+                color={COLORS.primary}
+              />
+            </TouchableOpacity>
+            {/* Nút micro */}
+            <TouchableOpacity
+              onPress={isRecording ? stopRecording : startRecording}
+              style={{ marginTop: 16 }}
+              disabled={loading}
+            >
+              <MaterialCommunityIcons
+                name={isRecording ? "microphone-off" : "microphone"}
+                size={24}
+                color={COLORS.primary}
+              />
+            </TouchableOpacity>
+            {loading && (
+              <ActivityIndicator
+                size="small"
+                color={COLORS.primary}
+                style={{ marginTop: 12 }}
+              />
+            )}
+            {spokenText !== "" && !loading && (
+              <Text
+                style={{ marginTop: 12, color: isCorrect ? "green" : "red" }}
+              >
+                {isCorrect ? "✔️ Bạn nói đúng!" : `❌ Bạn nói: "${spokenText}"`}
+              </Text>
+            )}
+          </Animated.View>
+          {/* Card back */}
+          <Animated.View
+            style={[
+              styles.card,
+              {
+                backfaceVisibility: "hidden",
+                position: "absolute",
+                width: "100%",
+                height: "100%",
+                transform: [
+                  { rotateY: backInterpolate },
+                  { translateX: slideAnim },
+                ],
+              },
+            ]}
+            onTouchEnd={handleFlip} // Giữ lại dòng này
+          >
+            <Image
+              source={{
+                uri: "http://192.168.26.121:5000" + currentCard.image_url,
+              }}
+              style={styles.image}
+              resizeMode="contain"
             />
-          </TouchableOpacity>
-
-          {/* Nút micro */}
-          <TouchableOpacity onPress={startListening}>
-            <MaterialCommunityIcons
-              name="microphone"
-              size={24}
-              color={COLORS.primary}
+            <Text style={styles.meaning}>{currentCard.back_text}</Text>
+            <Text style={styles.pronun}>{""}</Text>
+            {/* Nút phát âm */}
+            <TouchableOpacity onPress={() => speakWord(currentCard.front_text)}>
+              <MaterialCommunityIcons
+                name="volume-high"
+                size={24}
+                color={COLORS.primary}
+              />
+            </TouchableOpacity>
+            {/* Nút micro */}
+            <TouchableOpacity
+              onPress={isRecording ? stopRecording : startRecording}
               style={{ marginTop: 12 }}
-            />
-          </TouchableOpacity>
-
-          {/* Hiển thị kết quả */}
-          {spokenText !== "" && (
-            <Text style={{ marginTop: 12, color: isCorrect ? "green" : "red" }}>
-              {isCorrect ? "✔️ Bạn nói đúng!" : `❌ Bạn nói: "${spokenText}"`}
-            </Text>
-          )}
+              disabled={loading}
+            >
+              <MaterialCommunityIcons
+                name={isRecording ? "microphone-off" : "microphone"}
+                size={24}
+                color={COLORS.primary}
+              />
+            </TouchableOpacity>
+            {loading && (
+              <ActivityIndicator
+                size="small"
+                color={COLORS.primary}
+                style={{ marginTop: 12 }}
+              />
+            )}
+            {spokenText !== "" && !loading && (
+              <Text
+                style={{ marginTop: 12, color: isCorrect ? "green" : "red" }}
+              >
+                {isCorrect ? "✔️ Bạn nói đúng!" : `❌ Bạn nói: "${spokenText}"`}
+              </Text>
+            )}
+          </Animated.View>
         </View>
-
-        {/* Nút lật thẻ */}
-        <View style={styles.flipButton}>
-          <TouchableOpacity style={styles.flip} onPress={handleFlip}>
-            <Text style={styles.flipText}>Lật thẻ</Text>
-          </TouchableOpacity>
-        </View>
-
         {/* Nút back/next */}
         <View style={styles.buttonRow}>
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
@@ -190,10 +434,12 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
+    marginBottom: 40,
+    height: 400,
   },
   image: {
-    width: 180,
-    height: 180,
+    width: 200,
+    height: 200,
     marginBottom: 20,
     borderRadius: 8,
   },

@@ -1,5 +1,5 @@
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://192.168.193.121:5000/api";
+  process.env.EXPO_PUBLIC_API_URL || "http://192.168.26.121:5000/api";
 
 // Tạo flashcard mới
 // export const createCard = async ({ deck_id, front_text, back_text, image }) => {
@@ -211,7 +211,7 @@ export const createCard = async (deck_id, front_text, back_text, image) => {
     throw error;
   }
 };
-export const updateCard = async (id, { front_text, back_text, image }) => {
+export const updateCard = async (id, front_text, back_text, image) => {
   try {
     console.log(id, front_text, back_text, image);
 
@@ -220,16 +220,18 @@ export const updateCard = async (id, { front_text, back_text, image }) => {
     formData.append("back_text", back_text);
 
     if (image) {
-      formData.append("image", image);
+      formData.append("image", {
+        uri: image.uri,
+        name: image.name,
+        type: image.type,
+      });
     }
 
-    const response = await fetch(
-      `http://192.168.193.121:5000/api/cards/${id}`,
-      {
-        method: "PUT",
-        body: formData,
-      }
-    );
+    const response = await fetch(`http://192.168.26.121:5000/api/cards/${id}`, {
+      method: "PUT",
+
+      body: formData,
+    });
 
     if (!response.ok) {
       const errorData = await response.json();

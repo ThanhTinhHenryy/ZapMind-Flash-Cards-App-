@@ -1,5 +1,5 @@
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://192.168.193.121:5000/api";
+  process.env.EXPO_PUBLIC_API_URL || "http://192.168.26.121:5000/api";
 
 export const fetchDecks = async (userId) => {
   try {
@@ -12,7 +12,7 @@ export const fetchDecks = async (userId) => {
     }
 
     const data = await response.json();
-    console.log(data);
+    //console.log(data);
 
     return data; // Trả về mảng các set
   } catch (error) {

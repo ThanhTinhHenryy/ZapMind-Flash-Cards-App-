@@ -78,7 +78,16 @@ export default function Create() {
   };
 
   const handleCreateCard = () => {
-    router.push("/(create)/SelectDeck"); // Điều hướng đến trang Create Card
+    router.push({
+      pathname: "/(create)/SelectDeck",
+      params: { loai: "normal" },
+    });
+  };
+  const handleCreateCardAI = () => {
+    router.push({
+      pathname: "/(create)/SelectDeck",
+      params: { loai: "AI" },
+    });
   };
 
   return (
@@ -89,7 +98,18 @@ export default function Create() {
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.cardButton} onPress={handleCreateCard}>
-        <Text style={styles.buttonText}>Tạo card và{"\n"}thêm vào Set</Text>
+        <Text style={styles.buttonText}>Tạo card thủ công</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.cardButton} onPress={handleCreateCardAI}>
+        <Text style={styles.buttonText}>Tạo card AI</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.cardButton}
+        onPress={() => router.push("/(create)/ImportCards")}
+      >
+        <Text style={styles.buttonText}>Tạo card nhanh</Text>
       </TouchableOpacity>
     </View>
   );
@@ -119,6 +139,7 @@ const styles = StyleSheet.create({
     paddingVertical: 38,
     paddingLeft: 37,
     paddingRight: 24,
+    marginBottom: 30,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",

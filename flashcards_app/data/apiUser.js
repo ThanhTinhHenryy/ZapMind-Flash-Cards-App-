@@ -1,6 +1,6 @@
 // api/apiUser.js
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://192.168.193.121:5000/api";
+  process.env.EXPO_PUBLIC_API_URL || "http://192.168.26.121:5000/api";
 
 export const loginUser = async ({ email, password }) => {
   console.log(API_BASE_URL);

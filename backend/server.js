@@ -52,6 +52,7 @@ const app = express();
 const dotenv = require("dotenv");
 const cors = require("cors");
 const path = require("path");
+const whisperRoutes = require("./routes/whisperRoutes");
 
 // Cấu hình biến môi trường từ file .env
 dotenv.config();
@@ -78,7 +79,7 @@ app.use(
   express.static(path.join(__dirname, "uploads/decks"))
 );
 app.use("/api/cards", cardRoutes);
-
+app.use("/api/whisper", whisperRoutes);
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });

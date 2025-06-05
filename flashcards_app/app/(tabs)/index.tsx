@@ -89,7 +89,6 @@ export default function Index() {
     const getDecks = async () => {
       try {
         const data = await fetchDecks(userId);
-        console.log(data);
 
         setSets(data);
       } catch (error) {
@@ -117,7 +116,7 @@ export default function Index() {
                 titleSet={item.name}
                 creator={user.name}
                 cards={item.sl}
-                imageUrl={"http://192.168.193.121:5000" + item.image_url || ""}
+                imageUrl={"http://192.168.26.121:5000" + item.image_url || ""}
                 onPressView={() =>
                   router.push({
                     pathname: "/(set)/CardPreview",

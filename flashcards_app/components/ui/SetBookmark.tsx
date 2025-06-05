@@ -2,7 +2,13 @@
 import { COLORS } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ImageBackground,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 type Props = {
   titleSet: string;
@@ -22,50 +28,55 @@ const SetBookmark = ({
   imageUrl,
 }: Props) => {
   return (
-    <View style={styles.cardContainer}>
-      {imageUrl && (
-        <Image
-          // !! nếu là string || imageUrl
-          source={typeof imageUrl === "string" ? { uri: imageUrl } : imageUrl}
-          style={styles.image}
-        />
-      )}
-      <View style={{ flex: 1 }}>
+    <ImageBackground
+      source={imageUrl ? { uri: imageUrl } : undefined}
+      style={styles.cardContainer}
+      imageStyle={styles.backgroundImage}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
         <Text style={styles.title}>{titleSet}</Text>
         <Text style={styles.creator}>Tác giả: {creator}</Text>
         <Text style={styles.cards}>Thẻ: {cards}</Text>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity style={styles.addButton} onPress={onPressPreview}>
+            <Ionicons name="eye-outline" size={28} color={COLORS.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.addButton} onPress={onPressAdd}>
+            <Ionicons name="bookmark" size={28} color={COLORS.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
-      <TouchableOpacity style={styles.addButton} onPress={onPressPreview}>
-        <Ionicons name="eye-outline" size={28} color={COLORS.primary} />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.addButton} onPress={onPressAdd}>
-        <Ionicons name="bookmark" size={28} color={COLORS.primary} />
-      </TouchableOpacity>
-    </View>
+    </ImageBackground>
   );
 };
 
-export default SetBookmark;
-
 const styles = StyleSheet.create({
   cardContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 12,
+    width: "47%",
+    aspectRatio: 1,
     borderRadius: 12,
+    overflow: "hidden",
     marginVertical: 6,
     elevation: 2,
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
+    justifyContent: "flex-end",
   },
-  image: {
-    width: 60,
-    height: 60,
-    borderRadius: 10,
-    marginRight: 12,
+  backgroundImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 12,
+  },
+  overlay: {
+    backgroundColor: "rgba(255,255,255,0.8)",
+    borderRadius: 12,
+    padding: 12,
+    flex: 1,
+    justifyContent: "flex-end",
+    alignItems: "center",
   },
   title: {
     fontSize: 16,
@@ -79,8 +90,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.grey,
   },
+  buttonRow: {
+    flexDirection: "row",
+    marginTop: 8,
+  },
   addButton: {
     padding: 4,
-    marginLeft: 8,
+    marginHorizontal: 8,
   },
 });
+
+export default SetBookmark;

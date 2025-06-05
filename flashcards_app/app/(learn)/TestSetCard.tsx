@@ -136,7 +136,7 @@ const TestSetCard = () => {
             {/* {<Image source={{ uri: question.image }} style={styles.image} />} */}
             {question.image ? (
               <Image
-                source={{ uri: "http://192.168.193.121:5000" + question.image }}
+                source={{ uri: "http://192.168.26.121:5000" + question.image }}
                 style={styles.image}
               />
             ) : (

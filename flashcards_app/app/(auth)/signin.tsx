@@ -9,6 +9,7 @@ import { COLORS } from "@/constants/theme";
 import { setUser } from "@/data/userStore";
 import { loginUser } from "data/apiUser";
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import React, { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 const Signin = () => {
@@ -17,7 +18,6 @@ const Signin = () => {
   const router = useRouter();
 
   // const handleLogin = async () => {
-  //   console.log(JSON.stringify({ email, password }));
 
   //   try {
   //     const res = await fetch("http://192.168.18.121:5000/api/auth/login", {
@@ -34,8 +34,6 @@ const Signin = () => {
   //       throw new Error(data.message || "Đăng nhập thất bại");
   //     }
 
-  //     console.log("Đăng nhập thành công:", data);
-
   //     // TODO: Lưu token nếu cần
   //     // Chuyển sang màn hình chính
   //     router.replace("/");
@@ -45,16 +43,22 @@ const Signin = () => {
   //   }
   // };
   const handleLogin = async () => {
-    console.log("goi login");
+    //console.log("goi login");
 
     try {
       const data = await loginUser({ email, password });
-      console.log("Đăng nhập thành công:", data);
       const user = data.user;
       const token = data.token;
-      console.log(user);
+      await SecureStore.setItemAsync("jwt", token);
+      await SecureStore.setItemAsync("user", JSON.stringify(user)); // Lưu user vào SecureStore
+      //console.log("đây là token", token);
+      //console.log("đây là user", user);
+      const tokenSaved = await SecureStore.getItemAsync("jwt");
+      const userSaved = await SecureStore.getItemAsync("user");
+      //console.log("đây là token đã lưu", tokenSaved);
+      //console.log("đây là user đã lưu", userSaved);
+
       setUser(user);
-      // TODO: Lưu token nếu cần
       router.replace("/(tabs)");
     } catch (err: any) {
       console.error("Lỗi đăng nhập:", err);

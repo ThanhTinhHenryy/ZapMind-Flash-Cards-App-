@@ -3,9 +3,10 @@ import LoginButton from "@/components/LoginButton";
 import ProgressSet from "@/components/ui/ProgressSet";
 import { COLORS } from "@/constants/theme";
 import { getUser } from "@/data/userStore";
+import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
-
 type Props = {
   imageUrl?: string;
   percentage?: number;
@@ -38,12 +39,16 @@ export default function Profile({
   const label = propLabel || testLabel;
   const barColor = propBarColor || testBarColor;
   const barWidth = propBarWidth || testBarWidth;
+  const handleLogout = async () => {
+    await SecureStore.deleteItemAsync("jwt");
+    router.replace("/(auth)/signin");
+  };
   return (
     <View style={styles.container}>
       <Title textTitle="Profile" />
       {/* Avatar */}
       <Image source={displayImageUrl} style={styles.image} />
-      {/* Ten user */}
+      {}
       <Text style={{ color: COLORS.primary, marginBottom: 20 }}>
         {getUser().email}
       </Text>
@@ -85,6 +90,7 @@ export default function Profile({
       <LoginButton
         title="Đăng xuất"
         style={{ backgroundColor: "red", height: 55, marginTop: 20 }}
+        onPress={handleLogout}
       />
     </View>
   );
